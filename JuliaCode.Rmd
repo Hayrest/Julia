@@ -1,0 +1,52 @@
+---
+title: "ViolenceCode"
+author: "Hayrest"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library (tidyverse)
+library (readxl)
+library (corrplot)
+library (performance)
+```
+
+1. Loading a database
+
+```{r}
+JuliaViolence <- read_excel ("../../data/rawdata/Julia.xlsx", sheet = 16) %>% mutate(across (where (is.character), as.factor)) %>% glimpse ()
+```
+
+2. Анализ коррелируемых переменных
+
+```{r, fig.width=10, fig.width=10}
+JuliaViolence_num <- JuliaViolence %>% select (where(is.numeric)) %>% select (-c(1, 10:86)) %>% glimpse ()
+
+JuliaViolence_num %>% cor (method = "spearman") %>% corrplot(method = "number", tl.col = "black")
+```
+
+**Вывод:** в исследовании есть ошибка набора (sample bias), который влияет на outcome согласно DAG
+
+4. Регрессионный анализ
+
+```{r, fig.width=15, fig.width=10}
+
+modelanxiety <- lm(`Шкала тревоги` ~ Насилие, data = JuliaViolence)
+
+summary (modelanxiety)
+
+check_model(modelanxiety)
+```
+
+
+```{r}
+ggplot (JuliaViolence, aes (x = Насилие, y = `Шкала тревоги`)) +
+  geom_boxplot () + 
+  theme_bw ()
+
+wilcox.test(`Шкала тревоги` ~ Насилие, data = JuliaViolence)
+```
+
